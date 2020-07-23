@@ -3,6 +3,7 @@ import csv
 import math
 import copy
 import random
+from sklearn.metrics import confusion_matrix
 
 def read_csv(filename):
     data = []
@@ -14,7 +15,7 @@ def read_csv(filename):
 
 def str_to_float(dataset):
     for i in range(1,len(dataset)):
-        for j in range(len(dataset[i])):
+        for j in range(len(dataset[0])):
             dataset[i][j] = float(dataset[i][j])
 
 def minMax(dataset):
@@ -67,15 +68,17 @@ def evaluateAlgorithm(dataset, epochs, learning_rate, coef):
         train.remove(fold)
         predictions = logisticRegression(train, fold, epochs, learning_rate, coef)
         actual = [row[-1] for row in fold]
+        print(actual[0])
+        print(confusion_matrix(actual, predictions))
         score = accuracyScore(actual, predictions)
         scores.append(score)
     return scores
 
-def stochasticGradient(dataset, epochs, learning_rate, coef):
+def stochasticGradient(train, epochs, learning_rate, coef):
     for epoch in range(epochs):
-        for i in range( len(dataset) // 2 ):
-            index = random.randrange(len(dataset))
-            row = dataset[index]
+        for i in range( len(train) // 2 ):   # test randomly any 306 rows
+            index = random.randrange(len(train))
+            row = train[index]
             y_pred = predict(coef, row)
             loss = y_pred - row[-1]
             coef[0] = coef[0] - learning_rate * loss
@@ -85,8 +88,8 @@ def stochasticGradient(dataset, epochs, learning_rate, coef):
 
 def logisticRegression(train, test, epochs, learning_rate, coef):
     train = np.array(train)
-    t_shape = train.shape
-    train = train.reshape( t_shape[0] * t_shape[1], t_shape[2] )
+    t_shape = train.shape   # (4,153,9)
+    train = train.reshape( t_shape[0] * t_shape[1], t_shape[2] )  # (612,9)
     predictions = []
     coef = stochasticGradient(train, epochs, learning_rate, coef)
     for row in test:
@@ -104,3 +107,6 @@ learning_rate = 0.001
 scores = evaluateAlgorithm(dataset, epochs, learning_rate, coef)
 print("All scores : ", scores)
 print("Final score : ", sum(scores)/len(scores))
+
+fake_row = [1, 126, 60, 0, 0, 30.1, 0.349, 47, 1]
+print("You're diabetic") if round( predict(coef, fake_row) ) == 1 else print("You're not diabetic")
